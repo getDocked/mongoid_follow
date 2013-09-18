@@ -14,12 +14,16 @@ module Mongoid
     def follow(model)
       if self.id != model.id && !self.follows?(model)
 
-        model.before_followed_by(self) if model.respond_to?('before_followed_by')
+       	continue = model.before_followed_by(self) if model.respond_to?('before_followed_by')
+       	return unless continue
+
         model.followers.create!(:ff_type => self.class.name, :ff_id => self.id)
         model.inc(:fferc, 1)
         model.after_followed_by(self) if model.respond_to?('after_followed_by')
 
-        self.before_follow(model) if self.respond_to?('before_follow')
+        continue = self.before_follow(model) if self.respond_to?('before_follow')
+        return unless continue
+        
         self.followees.create!(:ff_type => model.class.name, :ff_id => model.id)
         self.inc(:ffeec, 1)
         self.after_follow(model) if self.respond_to?('after_follow')
